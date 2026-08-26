@@ -205,3 +205,51 @@ export async function transferToEscrow(dealId: string) {
 
   redirect(`/deal/${dealId}`);
 }
+
+export async function confirmShipment(dealId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/");
+
+  const { data: deal } = await supabase
+    .from("deals")
+    .select("id, seller_id, status")
+    .eq("id", dealId)
+    .maybeSingle();
+
+  if (deal && deal.seller_id === user.id && deal.status === "funds_held") {
+    await supabase.from("deals").update({ status: "shipped" }).eq("id", dealId);
+    revalidatePath(`/deal/${dealId}`);
+  }
+
+  redirect(`/deal/${dealId}`);
+}
+
+export async function confirmReceipt(dealId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/");
+
+  const { data: deal } = await supabase
+    .from("deals")
+    .select("id, buyer_id, status")
+    .eq("id", dealId)
+    .maybeSingle();
+
+  if (deal && deal.buyer_id === user.id && deal.status === "shipped") {
+    await supabase
+      .from("escrow_status")
+      .update({ status: "released", updated_at: new Date().toISOString() })
+      .eq("deal_id", dealId);
+
+    await supabase.from("deals").update({ status: "completed" }).eq("id", dealId);
+
+    revalidatePath(`/deal/${dealId}`);
+  }
+
+  redirect(`/deal/${dealId}`);
+}

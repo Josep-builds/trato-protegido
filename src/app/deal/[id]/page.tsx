@@ -7,7 +7,7 @@ import type { Deal, EscrowStatus, Verification } from "@/lib/types";
 import SignOutButton from "../../sign-out-button";
 import SimulatedBadge from "../../simulated-badge";
 import VerifyForm from "./verify-form";
-import { transferToEscrow } from "./actions";
+import { confirmReceipt, confirmShipment, transferToEscrow } from "./actions";
 
 async function shareUrlFor(dealId: string) {
   const host = (await headers()).get("host");
@@ -140,9 +140,19 @@ export default async function DealPage(props: PageProps<"/deal/[id]">) {
               </p>
             )}
             {deal.status === "funds_held" && (
-              <p className="text-sm text-zinc-600">
-                Funds are held in escrow. Shipment confirmation is available in the next step.
-              </p>
+              <div className="rounded-md border border-zinc-200 p-4">
+                <p className="text-sm text-zinc-600">
+                  Funds are held in escrow. Ship the item, then confirm shipment.
+                </p>
+                <form action={confirmShipment.bind(null, deal.id)} className="mt-3">
+                  <button
+                    type="submit"
+                    className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                  >
+                    Confirm shipment
+                  </button>
+                </form>
+              </div>
             )}
             {deal.status === "shipped" && (
               <p className="text-sm text-zinc-600">Waiting for the buyer to confirm receipt.</p>
@@ -178,9 +188,20 @@ export default async function DealPage(props: PageProps<"/deal/[id]">) {
               </p>
             )}
             {deal.status === "shipped" && (
-              <p className="text-sm text-zinc-600">
-                Item marked as shipped. Confirming receipt is available in the next step.
-              </p>
+              <div className="rounded-md border border-zinc-200 p-4">
+                <p className="text-sm text-zinc-600">
+                  The seller marked this as shipped. Confirm once you&rsquo;ve received it —
+                  this releases the escrowed funds to the seller.
+                </p>
+                <form action={confirmReceipt.bind(null, deal.id)} className="mt-3">
+                  <button
+                    type="submit"
+                    className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                  >
+                    Confirm receipt
+                  </button>
+                </form>
+              </div>
             )}
             {deal.status === "completed" && (
               <p className="text-sm text-green-700">Deal completed.</p>
