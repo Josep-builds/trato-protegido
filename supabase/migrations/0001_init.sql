@@ -33,6 +33,14 @@ create table escrow_status (
   updated_at timestamptz not null default now()
 );
 
+-- RLS restricts rows, but the `authenticated` role still needs the base
+-- table privilege to touch these tables at all — grant that explicitly
+-- rather than relying on a project's default privilege configuration.
+grant usage on schema public to authenticated;
+grant select, insert, update on public.deals to authenticated;
+grant select, insert on public.verifications to authenticated;
+grant select, update on public.escrow_status to authenticated;
+
 -- Auto-create the escrow row (amount = item_price, status 'none') whenever a
 -- deal is created, so the app never has to insert it separately.
 create function create_escrow_row()
@@ -131,7 +139,8 @@ create policy escrow_update on escrow_status for update
 -- Private storage bucket for the ID photo + selfie pair, scoped by a
 -- `<deal_id>/...` path prefix so storage RLS can key off the owning deal.
 insert into storage.buckets (id, name, public)
-values ('verifications', 'verifications', false);
+values ('verifications', 'verifications', false)
+on conflict (id) do nothing;
 
 create policy verif_upload on storage.objects for insert to authenticated
   with check (

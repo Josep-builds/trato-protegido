@@ -1,12 +1,9 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { STATUS_LABEL } from "@/lib/deal-status";
+import { formatPrice } from "@/lib/format";
 import type { Deal } from "@/lib/types";
 import SignOutButton from "../sign-out-button";
-
-function priceLabel(price: number) {
-  return price.toLocaleString("es-MX", { style: "currency", currency: "MXN" });
-}
 
 function DealRow({ deal }: { deal: Deal }) {
   return (
@@ -16,7 +13,7 @@ function DealRow({ deal }: { deal: Deal }) {
     >
       <div>
         <p className="font-medium text-zinc-900">{deal.item_name}</p>
-        <p className="text-zinc-500">{priceLabel(deal.item_price)}</p>
+        <p className="text-zinc-500">{formatPrice(deal.item_price)}</p>
       </div>
       <span className="rounded-full bg-zinc-100 px-2.5 py-1 text-xs font-medium text-zinc-700">
         {STATUS_LABEL[deal.status]}
