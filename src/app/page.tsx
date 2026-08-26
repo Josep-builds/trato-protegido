@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SignInButton from "./sign-in-button";
 
-export default async function Home() {
+export default async function Home(props: PageProps<"/">) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -11,6 +11,8 @@ export default async function Home() {
   if (user) {
     redirect("/dashboard");
   }
+
+  const { error } = await props.searchParams;
 
   return (
     <div className="flex flex-1 items-center justify-center bg-zinc-50 px-6">
@@ -23,6 +25,11 @@ export default async function Home() {
           </p>
         </div>
         <SignInButton />
+        {error && (
+          <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">
+            Sign-in failed: {Array.isArray(error) ? error[0] : error}
+          </p>
+        )}
         <p className="text-xs text-zinc-400">
           Identity verification and escrow shown in this demo are simulated.
         </p>
