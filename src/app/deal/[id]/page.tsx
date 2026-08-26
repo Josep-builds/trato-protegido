@@ -7,6 +7,7 @@ import type { Deal, EscrowStatus, Verification } from "@/lib/types";
 import SignOutButton from "../../sign-out-button";
 import SimulatedBadge from "../../simulated-badge";
 import VerifyForm from "./verify-form";
+import { transferToEscrow } from "./actions";
 
 async function shareUrlFor(dealId: string) {
   const host = (await headers()).get("host");
@@ -154,9 +155,22 @@ export default async function DealPage(props: PageProps<"/deal/[id]">) {
           <div className="space-y-3">
             {deal.status === "pending" && <VerifyForm dealId={deal.id} />}
             {deal.status === "buyer_verified" && (
-              <p className="text-sm text-zinc-600">
-                Verified. Transferring funds to escrow is available in the next step.
-              </p>
+              <div className="space-y-2 rounded-md border border-zinc-200 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-medium text-zinc-900">
+                    Transfer {formatPrice(deal.item_price)} to escrow
+                  </p>
+                  <SimulatedBadge label="Escrow transfer" />
+                </div>
+                <form action={transferToEscrow.bind(null, deal.id)}>
+                  <button
+                    type="submit"
+                    className="w-full rounded-md bg-black px-4 py-2 text-sm font-medium text-white hover:bg-neutral-800"
+                  >
+                    Transfer to escrow
+                  </button>
+                </form>
+              </div>
             )}
             {deal.status === "funds_held" && (
               <p className="text-sm text-zinc-600">

@@ -2,6 +2,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { validatePhoto } from "@/lib/validation";
 
@@ -176,4 +177,31 @@ export async function verifyBuyer(formData: FormData): Promise<VerifyResult> {
     ok: result === "pass",
     message: reason,
   };
+}
+
+export async function transferToEscrow(dealId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/");
+
+  const { data: deal } = await supabase
+    .from("deals")
+    .select("id, buyer_id, status")
+    .eq("id", dealId)
+    .maybeSingle();
+
+  if (deal && deal.buyer_id === user.id && deal.status === "buyer_verified") {
+    await supabase
+      .from("escrow_status")
+      .update({ status: "held", updated_at: new Date().toISOString() })
+      .eq("deal_id", dealId);
+
+    await supabase.from("deals").update({ status: "funds_held" }).eq("id", dealId);
+
+    revalidatePath(`/deal/${dealId}`);
+  }
+
+  redirect(`/deal/${dealId}`);
 }
